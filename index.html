@@ -1,0 +1,569 @@
+LIFF form
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>休み希望フォーム</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #F2F7F9;
+      --surface:   #FFFFFF;
+      --primary:   #2A7D9C;
+      --primary-d: #1F5F78;
+      --accent:    #4BBFA0;
+      --text:      #1E2D3A;
+      --muted:     #7A8F9C;
+      --border:    #D3E4EC;
+      --error:     #D64045;
+      --hist-bg:   #F0FAF7;
+      --hist-bdr:  #B2E0D4;
+      --r-card: 14px; --r-btn: 10px; --r-inp: 8px;
+      --shadow: 0 2px 12px rgba(42,125,156,.10);
+    }
+    html,body {
+      background:var(--bg); color:var(--text);
+      font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+      font-size:15px; line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+    }
+    .page { max-width:480px; margin:0 auto; padding:0 0 56px; }
+
+    /* ヘッダー */
+    .header {
+      background:linear-gradient(135deg,var(--primary) 0%,#1a8fa8 100%);
+      padding:28px 20px 22px;
+      display:flex; align-items:center; gap:14px; position:relative;
+    }
+    .header::after {
+      content:''; position:absolute; bottom:-12px; left:0; right:0;
+      height:12px; background:var(--bg); border-radius:14px 14px 0 0;
+    }
+    .avatar-wrap {
+      flex-shrink:0; width:56px; height:56px; border-radius:50%;
+      background:rgba(255,255,255,.25); border:2.5px solid rgba(255,255,255,.6);
+      overflow:hidden; display:flex; align-items:center; justify-content:center;
+    }
+    #avatar { width:100%; height:100%; object-fit:cover; display:none; }
+    .avatar-ph { font-size:26px; color:rgba(255,255,255,.8); }
+    .header-info { flex:1; }
+    .header-lbl { font-size:11px; color:rgba(255,255,255,.75); letter-spacing:.06em; }
+    #userName { font-size:18px; font-weight:700; color:#fff; word-break:break-all; }
+    .header-title {
+      position:absolute; right:18px; top:14px;
+      font-size:11px; font-weight:600; color:rgba(255,255,255,.6);
+    }
+
+    /* 共通カード */
+    .card {
+      background:var(--surface); border-radius:var(--r-card);
+      box-shadow:var(--shadow); padding:18px 16px; margin:20px 14px 0;
+    }
+    .sec-label {
+      display:flex; align-items:center; gap:8px;
+      font-size:12px; font-weight:700; letter-spacing:.08em;
+      color:var(--primary); text-transform:uppercase; margin-bottom:14px;
+    }
+    .sec-label .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+
+    /* 日付追加行 */
+    .add-row { display:flex; gap:8px; align-items:center; }
+    input[type="date"] {
+      flex:1; height:44px; min-width:0;
+      border:1.5px solid var(--border); border-radius:var(--r-inp);
+      padding:0 10px; font-size:14px; color:var(--text);
+      background:var(--bg); outline:none;
+      transition:border-color .2s; -webkit-appearance:none;
+    }
+    input[type="date"]:focus { border-color:var(--primary); background:#fff; }
+    .btn-add {
+      flex-shrink:0; height:44px; padding:0 16px;
+      border:none; border-radius:var(--r-inp);
+      background:var(--primary); color:#fff;
+      font-size:14px; font-weight:700; cursor:pointer;
+      display:flex; align-items:center; gap:4px; white-space:nowrap;
+      transition:background .18s,transform .1s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn-add:active { background:var(--primary-d); transform:scale(.97); }
+    .field-error { font-size:12px; color:var(--error); margin-top:6px; display:none; }
+    .field-error.on { display:block; }
+
+    /* エントリーカード群 */
+    .entries { display:flex; flex-direction:column; gap:12px; margin-top:14px; }
+    .entry-card {
+      border:1.5px solid var(--border); border-radius:12px;
+      padding:14px 14px 12px; background:#FAFCFD;
+      animation:entryIn .2s ease; position:relative;
+    }
+    @keyframes entryIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .entry-head {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
+    }
+    .entry-date-lbl { font-size:15px; font-weight:700; color:var(--primary); }
+    .btn-del {
+      width:26px; height:26px; border-radius:50%;
+      border:none; background:rgba(214,64,69,.12);
+      color:var(--error); font-size:15px; line-height:1;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .15s; -webkit-tap-highlight-color:transparent;
+    }
+    .btn-del:hover { background:rgba(214,64,69,.25); }
+
+    /* AM/PM トグル */
+    .ampm-toggle {
+      display:flex; border:1.5px solid var(--border);
+      border-radius:var(--r-inp); overflow:hidden; margin-bottom:10px;
+    }
+    .ampm-toggle input[type="radio"] { display:none; }
+    .ampm-toggle label {
+      flex:1; display:flex; align-items:center; justify-content:center;
+      height:38px; font-size:12px; font-weight:700;
+      color:var(--muted); background:var(--bg);
+      cursor:pointer; user-select:none;
+      transition:background .15s,color .15s;
+      -webkit-tap-highlight-color:transparent;
+      border-right:1px solid var(--border);
+    }
+    .ampm-toggle label:last-of-type { border-right:none; }
+    .ampm-toggle input:checked + label { font-weight:800; }
+    .ampm-all:checked + label { background:var(--primary); color:#fff; }
+    .ampm-am:checked  + label { background:#FFF0D6; color:#A05C00; }
+    .ampm-pm:checked  + label { background:#EDE0FF; color:#5A2D9C; }
+
+    /* 時間自由記述 */
+    .time-free {
+      width:100%; height:36px;
+      border:1.5px solid var(--border); border-radius:var(--r-inp);
+      padding:0 10px; font-size:13px; color:var(--text);
+      background:var(--bg); outline:none;
+      transition:border-color .2s; font-family:inherit; margin-bottom:10px;
+    }
+    .time-free:focus { border-color:var(--primary); background:#fff; }
+    .time-free::placeholder { color:var(--muted); }
+
+    /* 希望内容 */
+    .entry-select {
+      width:100%; height:40px;
+      border:1.5px solid var(--border); border-radius:var(--r-inp);
+      padding:0 10px; font-size:14px; color:var(--text);
+      background:var(--bg); outline:none;
+      transition:border-color .2s; font-family:inherit;
+      cursor:pointer; margin-bottom:10px;
+    }
+    .entry-select:focus { border-color:var(--primary); background:#fff; }
+
+    /* 理由 */
+    .entry-reason {
+      width:100%;
+      border:1.5px solid var(--border); border-radius:var(--r-inp);
+      padding:8px 10px; font-size:13px; color:var(--text);
+      background:var(--bg); outline:none;
+      transition:border-color .2s; font-family:inherit;
+      resize:none; height:58px; line-height:1.5;
+    }
+    .entry-reason:focus { border-color:var(--primary); background:#fff; }
+    .entry-reason::placeholder { color:var(--muted); }
+    .entry-field-lbl { font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.05em; margin-bottom:4px; }
+    .entry-field { margin-bottom:10px; }
+    .entry-field:last-child { margin-bottom:0; }
+    .entries-empty { font-size:13px; color:var(--muted); text-align:center; padding:10px 0 2px; }
+
+    /* 送信ボタン */
+    .submit-wrap { padding:24px 14px 0; }
+    .btn-submit {
+      display:block; width:100%; height:54px;
+      border:none; border-radius:var(--r-btn);
+      background:linear-gradient(135deg,var(--accent) 0%,#38a88e 100%);
+      color:#fff; font-size:17px; font-weight:800; letter-spacing:.04em;
+      cursor:pointer; box-shadow:0 4px 14px rgba(75,191,160,.38);
+      transition:opacity .18s,transform .1s,box-shadow .18s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn-submit:active { opacity:.88; transform:scale(.98); }
+    .btn-submit:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .loader {
+      display:none; width:20px; height:20px;
+      border:2.5px solid rgba(255,255,255,.4); border-top-color:#fff;
+      border-radius:50%; animation:spin .7s linear infinite; margin:0 auto;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .btn-submit.loading .btn-label { display:none; }
+    .btn-submit.loading .loader   { display:block; }
+
+    /* ===== 送信履歴カード ===== */
+    .history-card {
+      background:var(--hist-bg);
+      border:1.5px solid var(--hist-bdr);
+      border-radius:var(--r-card);
+      box-shadow:var(--shadow);
+      padding:18px 16px;
+      margin:20px 14px 0;
+    }
+    .history-card .sec-label { color:#1a7a5e; }
+    .history-card .sec-label .dot { background:#4BBFA0; }
+
+    .hist-head {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .btn-clear-hist {
+      font-size:11px; color:var(--muted);
+      background:none; border:1px solid var(--border);
+      border-radius:20px; padding:3px 10px;
+      cursor:pointer; transition:background .15s,color .15s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn-clear-hist:hover { background:var(--border); color:var(--text); }
+
+    .hist-list { display:flex; flex-direction:column; gap:10px; }
+    .hist-item {
+      background:#fff;
+      border:1px solid var(--hist-bdr);
+      border-radius:10px;
+      padding:12px 14px;
+      animation:entryIn .25s ease;
+    }
+    .hist-item-top {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:6px;
+    }
+    .hist-submitted-at {
+      font-size:11px; color:var(--muted); font-weight:600;
+    }
+    .hist-badge {
+      font-size:11px; font-weight:800;
+      background:var(--accent); color:#fff;
+      border-radius:20px; padding:2px 9px;
+    }
+    .hist-dates { display:flex; flex-wrap:wrap; gap:6px; }
+    .hist-date-tag {
+      font-size:12px; font-weight:700;
+      background:var(--hist-bg); color:#1a7a5e;
+      border:1px solid var(--hist-bdr);
+      border-radius:20px; padding:3px 10px;
+      display:flex; align-items:center; gap:4px;
+    }
+    .hist-date-tag .ampm-pill {
+      font-size:10px; font-weight:800;
+      border-radius:10px; padding:1px 5px; line-height:1.4;
+    }
+    .ampm-pill.am  { background:#A05C00; color:#fff; }
+    .ampm-pill.pm  { background:#5A2D9C; color:#fff; }
+    .hist-date-tag .req-type {
+      font-size:10px; color:var(--muted); font-weight:600;
+    }
+    .hist-empty { font-size:13px; color:var(--muted); text-align:center; padding:4px 0; }
+
+    /* トースト */
+    .toast {
+      position:fixed; bottom:30px;
+      left:50%; transform:translateX(-50%) translateY(20px);
+      background:#1E2D3A; color:#fff;
+      padding:12px 22px; border-radius:30px;
+      font-size:14px; font-weight:600; white-space:nowrap;
+      opacity:0; pointer-events:none;
+      transition:opacity .25s,transform .25s;
+      z-index:9999; box-shadow:0 4px 18px rgba(0,0,0,.25);
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.success { background:var(--primary); }
+    .toast.error   { background:var(--error); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <span class="header-title">薬局スタッフ専用</span>
+    <div class="avatar-wrap">
+      <img id="avatar" src="" alt="プロフィール" />
+      <span class="avatar-ph" id="avatarPh">👤</span>
+    </div>
+    <div class="header-info">
+      <div class="header-lbl">ログイン中</div>
+      <div id="userName">読み込み中…</div>
+    </div>
+  </div>
+
+  <!-- 日付追加カード -->
+  <div class="card">
+    <div class="sec-label"><span class="dot"></span>希望日を追加</div>
+    <div class="add-row">
+      <input type="date" id="dateInput" />
+      <button class="btn-add" id="btnAdd">＋ 追加</button>
+    </div>
+    <div id="errDate" class="field-error">日付を選択してください</div>
+    <div id="errDup"  class="field-error">その日付はすでに追加されています</div>
+    <div class="entries" id="entriesArea">
+      <div class="entries-empty" id="entriesEmpty">日付を追加すると、ここに設定欄が表示されます</div>
+    </div>
+  </div>
+
+  <!-- 送信ボタン -->
+  <div class="submit-wrap">
+    <button class="btn-submit" id="btnSubmit">
+      <span class="btn-label">休み希望を送信する</span>
+      <div class="loader"></div>
+    </button>
+  </div>
+
+  <!-- 送信履歴カード -->
+  <div class="history-card" id="historyCard">
+    <div class="hist-head">
+      <div class="sec-label" style="margin-bottom:0"><span class="dot"></span>送信履歴</div>
+      <button class="btn-clear-hist" id="btnClearHist">履歴を消す</button>
+    </div>
+    <div class="hist-list" id="histList">
+      <div class="hist-empty" id="histEmpty">送信すると、ここに履歴が表示されます</div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ★ GAS WebアプリのURLをここに入れてください */
+  const GAS_URL = '';
+
+  /* ===== LIFF 初期化 ===== */
+  const LIFF_ID = '2010431371-55jjKeWe';
+  async function initLiff() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const p = await liff.getProfile();
+      if (p.pictureUrl) {
+        document.getElementById('avatar').src = p.pictureUrl;
+        document.getElementById('avatar').style.display = 'block';
+        document.getElementById('avatarPh').style.display = 'none';
+      }
+      document.getElementById('userName').textContent = p.displayName || '名前不明';
+      window._liffProfile = p;
+    } catch(e) {
+      console.warn('LIFF (ブラウザテスト中は正常):', e);
+      document.getElementById('userName').textContent = 'テストユーザー';
+      window._liffProfile = { userId:'test_user', displayName:'テストユーザー', pictureUrl:'' };
+    }
+  }
+
+  /* ===== エントリー管理 ===== */
+  const entries = new Map();
+  const dateInput    = document.getElementById('dateInput');
+  const btnAdd       = document.getElementById('btnAdd');
+  const entriesArea  = document.getElementById('entriesArea');
+  const entriesEmpty = document.getElementById('entriesEmpty');
+  const errDate      = document.getElementById('errDate');
+  const errDup       = document.getElementById('errDup');
+
+  dateInput.setAttribute('min', new Date().toLocaleDateString('sv-SE'));
+
+  const DAY = ['日','月','火','水','木','金','土'];
+  function fmtDate(str) {
+    const [y,m,d] = str.split('-').map(Number);
+    return `${m}月${d}日（${DAY[new Date(y,m-1,d).getDay()]}）`;
+  }
+
+  function createEntryCard(dateStr) {
+    const data = entries.get(dateStr);
+    const uid  = 'e_' + dateStr.replace(/-/g,'');
+    const card = document.createElement('div');
+    card.className = 'entry-card';
+    card.id = 'card_' + uid;
+    card.innerHTML = `
+      <div class="entry-head">
+        <span class="entry-date-lbl">📅 ${fmtDate(dateStr)}</span>
+        <button class="btn-del" aria-label="削除">✕</button>
+      </div>
+      <div class="entry-field">
+        <div class="entry-field-lbl">TIME ZONE</div>
+        <div class="ampm-toggle">
+          <input type="radio" class="ampm-am"  name="ampm_${uid}" id="am_${uid}"  value="AM" />
+          <label for="am_${uid}">午前 AM</label>
+          <input type="radio" class="ampm-pm"  name="ampm_${uid}" id="pm_${uid}"  value="PM" />
+          <label for="pm_${uid}">午後 PM</label>
+          <input type="radio" class="ampm-all" name="ampm_${uid}" id="all_${uid}" value="終日" checked />
+          <label for="all_${uid}">終日</label>
+        </div>
+        <input type="text" class="time-free" id="tf_${uid}"
+          placeholder="時間を自由記入（例：10:00〜15:00）　任意" />
+      </div>
+      <div class="entry-field">
+        <div class="entry-field-lbl">希望内容</div>
+        <select class="entry-select" id="rt_${uid}">
+          <option value="">― 選択してください ―</option>
+          <option value="公休">公休</option>
+          <option value="有休">有休</option>
+          <option value="振休">振休</option>
+          <option value="欠勤">欠勤</option>
+        </select>
+      </div>
+      <div class="entry-field">
+        <div class="entry-field-lbl">理由・メモ　<span style="font-weight:400">任意</span></div>
+        <textarea class="entry-reason" id="rs_${uid}"
+          placeholder="例：通院のため、家族の行事のため…"></textarea>
+      </div>
+    `;
+    card.querySelector('.btn-del').addEventListener('click', () => {
+      entries.delete(dateStr);
+      card.style.transition = 'opacity .15s';
+      card.style.opacity = '0';
+      setTimeout(() => { card.remove(); updateEmpty(); }, 150);
+    });
+    const syncData = () => {
+      data.ampm        = card.querySelector(`input[name="ampm_${uid}"]:checked`)?.value || '終日';
+      data.timeFree    = card.querySelector(`#tf_${uid}`).value.trim();
+      data.requestType = card.querySelector(`#rt_${uid}`).value;
+      data.reason      = card.querySelector(`#rs_${uid}`).value.trim();
+    };
+    card.addEventListener('change', syncData);
+    card.addEventListener('input',  syncData);
+    return card;
+  }
+
+  function updateEmpty() {
+    entriesEmpty.style.display = entries.size === 0 ? '' : 'none';
+  }
+
+  btnAdd.addEventListener('click', () => {
+    errDate.classList.remove('on');
+    errDup.classList.remove('on');
+    const dateStr = dateInput.value;
+    if (!dateStr) { errDate.classList.add('on'); dateInput.focus(); return; }
+    if (entries.has(dateStr)) { errDup.classList.add('on'); return; }
+    entries.set(dateStr, { date:dateStr, ampm:'終日', timeFree:'', requestType:'', reason:'' });
+    dateInput.value = '';
+    const sortedDates = [...entries.keys()].sort();
+    const idx = sortedDates.indexOf(dateStr);
+    const newCard = createEntryCard(dateStr);
+    const allCards = [...entriesArea.querySelectorAll('.entry-card')];
+    if (idx >= allCards.length) entriesArea.appendChild(newCard);
+    else entriesArea.insertBefore(newCard, allCards[idx]);
+    updateEmpty();
+  });
+  dateInput.addEventListener('keydown', e => { if(e.key==='Enter') btnAdd.click(); });
+
+  /* ===== 送信 ===== */
+  const btnSubmit = document.getElementById('btnSubmit');
+
+  btnSubmit.addEventListener('click', async () => {
+    if (entries.size === 0) { showToast('希望日を1件以上追加してください','error'); return; }
+    let valid = true;
+    entries.forEach((data, dateStr) => {
+      if (!data.requestType) {
+        const sel = document.getElementById('rt_e_' + dateStr.replace(/-/g,''));
+        if (sel) sel.style.borderColor = 'var(--error)';
+        valid = false;
+      }
+    });
+    if (!valid) { showToast('すべての日付の希望内容を選択してください','error'); return; }
+
+    btnSubmit.disabled = true;
+    btnSubmit.classList.add('loading');
+
+    const sortedEntries = [...entries.values()].sort((a,b)=>a.date.localeCompare(b.date));
+    const payload = {
+      userId:      window._liffProfile?.userId      || '',
+      displayName: window._liffProfile?.displayName || '',
+      entries:     sortedEntries,
+      submittedAt: new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})
+    };
+    console.log('送信データ:', payload);
+
+    if (!GAS_URL) {
+      await new Promise(r=>setTimeout(r,900));
+      onSuccess(payload); return;
+    }
+    try {
+      await fetch(GAS_URL,{
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      onSuccess(payload);
+    } catch(err) {
+      console.error('送信エラー:',err);
+      showToast('送信に失敗しました。再度お試しください','error');
+      btnSubmit.disabled = false;
+      btnSubmit.classList.remove('loading');
+    }
+  });
+
+  function onSuccess(payload) {
+    btnSubmit.classList.remove('loading');
+    showToast('休み希望を送信しました ✓','success');
+    addHistory(payload);
+    entries.clear();
+    [...entriesArea.querySelectorAll('.entry-card')].forEach(c=>c.remove());
+    updateEmpty();
+    setTimeout(()=>{ btnSubmit.disabled=false; },2000);
+  }
+
+  /* ===== 送信履歴 ===== */
+  // セッション中のみ保持（ページリロードでリセット）
+  const historyLog = [];
+
+  const histList  = document.getElementById('histList');
+  const histEmpty = document.getElementById('histEmpty');
+
+  function addHistory(payload) {
+    historyLog.unshift(payload); // 新しいものを先頭に
+    renderHistory();
+  }
+
+  function renderHistory() {
+    [...histList.querySelectorAll('.hist-item')].forEach(el=>el.remove());
+    if (historyLog.length === 0) {
+      histEmpty.style.display = '';
+      return;
+    }
+    histEmpty.style.display = 'none';
+    historyLog.forEach(payload => {
+      const item = document.createElement('div');
+      item.className = 'hist-item';
+
+      const dateTagsHtml = payload.entries.map(e => {
+        const ampmHtml = e.ampm !== '終日'
+          ? `<span class="ampm-pill ${e.ampm==='AM'?'am':'pm'}">${e.ampm}</span>`
+          : '';
+        const timeHtml = e.timeFree ? `<span class="req-type">${e.timeFree}</span>` : '';
+        const reqHtml  = e.requestType ? `<span class="req-type">／${e.requestType}</span>` : '';
+        return `<span class="hist-date-tag">${fmtDate(e.date)}${ampmHtml}${timeHtml}${reqHtml}</span>`;
+      }).join('');
+
+      item.innerHTML = `
+        <div class="hist-item-top">
+          <span class="hist-submitted-at">🕐 ${payload.submittedAt}</span>
+          <span class="hist-badge">${payload.entries.length}日分</span>
+        </div>
+        <div class="hist-dates">${dateTagsHtml}</div>
+      `;
+      histList.appendChild(item);
+    });
+  }
+
+  document.getElementById('btnClearHist').addEventListener('click', () => {
+    historyLog.length = 0;
+    renderHistory();
+  });
+
+  /* ===== トースト ===== */
+  let toastTimer;
+  function showToast(msg, type='') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast'+(type?' '+type:'');
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('show'), 3200);
+  }
+
+  initLiff();
+  updateEmpty();
+  renderHistory();
+</script>
+</body>
+</html>
