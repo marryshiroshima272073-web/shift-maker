@@ -512,13 +512,37 @@
     setTimeout(()=>{ btnSubmit.disabled=false; }, 2000);
   }
 
-  /* ===== 送信履歴 ===== */
-  const historyLog = [];
+  /* ===== 送信履歴（localStorageで永続化） ===== */
+  let historyLog = [];
   const histList  = document.getElementById('histList');
   const histEmpty = document.getElementById('histEmpty');
 
+  function getHistKey() {
+    const uid = window._liffProfile?.userId || 'anonymous';
+    return 'kyuka_history_' + uid;
+  }
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(getHistKey());
+      historyLog = raw ? JSON.parse(raw) : [];
+    } catch(e) {
+      console.warn('履歴の読み込みに失敗:', e);
+      historyLog = [];
+    }
+  }
+
+  function saveHistory() {
+    try {
+      localStorage.setItem(getHistKey(), JSON.stringify(historyLog));
+    } catch(e) {
+      console.warn('履歴の保存に失敗:', e);
+    }
+  }
+
   function addHistory(payload) {
     historyLog.unshift(payload);
+    saveHistory();
     renderHistory();
   }
 
@@ -555,6 +579,7 @@
 
   document.getElementById('btnClearHist').addEventListener('click', () => {
     historyLog.length = 0;
+    saveHistory();
     renderHistory();
   });
 
@@ -569,9 +594,11 @@
     toastTimer = setTimeout(()=>el.classList.remove('show'), 3200);
   }
 
-  initLiff();
+  initLiff().then(() => {
+    loadHistory();
+    renderHistory();
+  });
   updateEmpty();
-  renderHistory();
 </script>
 </body>
 </html>
