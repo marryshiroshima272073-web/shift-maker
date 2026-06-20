@@ -238,6 +238,15 @@
       background:var(--accent); color:#fff;
       border-radius:20px; padding:2px 9px;
     }
+    .hist-del-btn {
+      width:22px; height:22px; border-radius:50%;
+      border:none; background:rgba(214,64,69,.12);
+      color:var(--error); font-size:13px; line-height:1;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .15s; -webkit-tap-highlight-color:transparent;
+      flex-shrink:0;
+    }
+    .hist-del-btn:hover { background:rgba(214,64,69,.25); }
     .hist-dates { display:flex; flex-wrap:wrap; gap:6px; }
     .hist-date-tag {
       font-size:12px; font-weight:700;
@@ -470,7 +479,8 @@
       userId:      window._liffProfile?.userId      || '',
       displayName: window._liffProfile?.displayName || '',
       entries:     sortedEntries,
-      submittedAt: new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})
+      submittedAt: new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'}),
+      historyId:   Date.now() + '_' + Math.random().toString(36).slice(2,8)
     };
     console.log('送信データ:', payload);
 
@@ -526,6 +536,14 @@
     try {
       const raw = localStorage.getItem(getHistKey());
       historyLog = raw ? JSON.parse(raw) : [];
+      let needsSave = false;
+      historyLog.forEach(p => {
+        if (!p.historyId) {
+          p.historyId = Date.now() + '_' + Math.random().toString(36).slice(2,8);
+          needsSave = true;
+        }
+      });
+      if (needsSave) saveHistory();
     } catch(e) {
       console.warn('履歴の読み込みに失敗:', e);
       historyLog = [];
@@ -569,11 +587,23 @@
       item.innerHTML = `
         <div class="hist-item-top">
           <span class="hist-submitted-at">🕐 ${payload.submittedAt}</span>
-          <span class="hist-badge">${payload.entries.length}日分</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="hist-badge">${payload.entries.length}日分</span>
+            <button class="hist-del-btn" data-hid="${payload.historyId}" aria-label="この履歴を削除">✕</button>
+          </div>
         </div>
         <div class="hist-dates">${dateTagsHtml}</div>
       `;
       histList.appendChild(item);
+    });
+
+    histList.querySelectorAll('.hist-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const hid = btn.getAttribute('data-hid');
+        historyLog = historyLog.filter(p => p.historyId !== hid);
+        saveHistory();
+        renderHistory();
+      });
     });
   }
 
