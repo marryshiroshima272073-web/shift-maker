@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -598,19 +598,83 @@
     });
 
     histList.querySelectorAll('.hist-del-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const hid = btn.getAttribute('data-hid');
-        historyLog = historyLog.filter(p => p.historyId !== hid);
-        saveHistory();
-        renderHistory();
-      });
+      btn.addEventListener('click', () => deleteHistoryItem(btn));
     });
   }
 
-  document.getElementById('btnClearHist').addEventListener('click', () => {
-    historyLog.length = 0;
-    saveHistory();
-    renderHistory();
+  async function deleteHistoryItem(btn) {
+    const hid = btn.getAttribute('data-hid');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    const deletePayload = {
+      action: 'delete',
+      historyId: hid,
+      userId: window._liffProfile?.userId || ''
+    };
+
+    try {
+      if (GAS_URL) {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(deletePayload)
+        });
+        const result = await response.json();
+        if (result.status !== 'ok') {
+          throw new Error(result.message || 'サーバー側での削除に失敗しました');
+        }
+      }
+      // スプレッドシート側の削除に成功したらローカルの履歴からも消す
+      historyLog = historyLog.filter(p => p.historyId !== hid);
+      saveHistory();
+      renderHistory();
+      showToast('履歴を削除しました','success');
+    } catch(err) {
+      console.error('履歴削除エラー:', err);
+      showToast('削除に失敗しました。再度お試しください','error');
+      btn.disabled = false;
+      btn.textContent = '✕';
+    }
+  }
+
+  const btnClearHist = document.getElementById('btnClearHist');
+  btnClearHist.addEventListener('click', async () => {
+    if (historyLog.length === 0) return;
+    if (btnClearHist.disabled) return;
+    btnClearHist.disabled = true;
+    const originalLabel = btnClearHist.textContent;
+    btnClearHist.textContent = '削除中…';
+
+    const deletePayload = {
+      action: 'deleteAll',
+      userId: window._liffProfile?.userId || ''
+    };
+
+    try {
+      if (GAS_URL) {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(deletePayload)
+        });
+        const result = await response.json();
+        if (result.status !== 'ok') {
+          throw new Error(result.message || 'サーバー側での削除に失敗しました');
+        }
+      }
+      historyLog.length = 0;
+      saveHistory();
+      renderHistory();
+      showToast('履歴をすべて削除しました','success');
+    } catch(err) {
+      console.error('一括削除エラー:', err);
+      showToast('削除に失敗しました。再度お試しください','error');
+    } finally {
+      btnClearHist.disabled = false;
+      btnClearHist.textContent = originalLabel;
+    }
   });
 
   /* ===== トースト ===== */
