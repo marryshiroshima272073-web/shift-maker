@@ -67,6 +67,46 @@
     }
     .sec-label .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
 
+    /* 「休み希望日を追加」ボタン */
+    .btn-open-date {
+      width:100%; height:54px;
+      border:1.5px dashed var(--primary); border-radius:var(--r-inp);
+      background:#EAF4F7; color:var(--primary);
+      font-size:15px; font-weight:700; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      transition:background .15s,transform .1s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn-open-date:active { background:#DCEBF0; transform:scale(.98); }
+    .btn-open-date-icon { font-size:18px; }
+    /* 実体の日付inputは非表示にして、ボタン経由でのみ開く */
+    .date-input-hidden {
+      position:absolute; width:1px; height:1px;
+      padding:0; margin:-1px; overflow:hidden;
+      clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+
+    /* 下書き入力カード（日付選択直後〜「決定」まで） */
+    .draft-card {
+      display:none;
+      border:1.5px solid var(--primary); border-radius:12px;
+      padding:14px 14px 12px; background:#EAF4F7;
+      margin-top:12px; animation:entryIn .2s ease;
+    }
+    .draft-card.show { display:block; }
+    .draft-head { margin-bottom:10px; }
+    .draft-date-lbl { font-size:15px; font-weight:700; color:var(--primary); }
+    .draft-actions { display:flex; gap:8px; margin-top:4px; }
+    .btn-draft-cancel {
+      flex:1; height:44px;
+      border:1.5px solid var(--border); border-radius:var(--r-inp);
+      background:#fff; color:var(--muted);
+      font-size:14px; font-weight:700; cursor:pointer;
+      transition:background .15s; -webkit-tap-highlight-color:transparent;
+    }
+    .btn-draft-cancel:active { background:var(--bg); }
+    .draft-actions .btn-add { flex:1; justify-content:center; }
+
     /* 日付追加行 */
     .add-row { display:flex; gap:8px; align-items:center; }
     input[type="date"] {
@@ -299,11 +339,52 @@
 
   <div class="card">
     <div class="sec-label"><span class="dot"></span>希望日を追加</div>
-    <div class="add-row">
-      <input type="date" id="dateInput" />
-      <button class="btn-add" id="btnAdd">＋ 追加</button>
+
+    <button class="btn-open-date" id="btnOpenDate">
+      <span class="btn-open-date-icon">📅</span>
+      休み希望日を追加
+    </button>
+    <input type="date" id="dateInput" class="date-input-hidden" />
+
+    <div class="draft-card" id="draftCard">
+      <div class="draft-head">
+        <span class="draft-date-lbl" id="draftDateLbl"></span>
+      </div>
+      <div class="entry-field">
+        <div class="entry-field-lbl">TIME ZONE</div>
+        <div class="ampm-toggle">
+          <input type="radio" class="ampm-am"  name="draft_ampm" id="draft_am"  value="AM" />
+          <label for="draft_am">午前 AM</label>
+          <input type="radio" class="ampm-pm"  name="draft_ampm" id="draft_pm"  value="PM" />
+          <label for="draft_pm">午後 PM</label>
+          <input type="radio" class="ampm-all" name="draft_ampm" id="draft_all" value="終日" checked />
+          <label for="draft_all">終日</label>
+        </div>
+        <input type="text" class="time-free" id="draftTimeFree"
+          placeholder="時間を自由記入（例：10:00〜15:00） 任意" />
+      </div>
+      <div class="entry-field">
+        <div class="entry-field-lbl">希望内容</div>
+        <select class="entry-select" id="draftRequestType">
+          <option value="">― 選択してください ―</option>
+          <option value="公休">公休</option>
+          <option value="有休">有休</option>
+          <option value="振休">振休</option>
+          <option value="欠勤">欠勤</option>
+        </select>
+        <div id="errDraftType" class="field-error">希望内容を選択してください</div>
+      </div>
+      <div class="entry-field">
+        <div class="entry-field-lbl">理由・メモ <span style="font-weight:400">任意</span></div>
+        <textarea class="entry-reason" id="draftReason"
+          placeholder="例：通院のため、家族の行事のため…"></textarea>
+      </div>
+      <div class="draft-actions">
+        <button class="btn-draft-cancel" id="btnDraftCancel">キャンセル</button>
+        <button class="btn-add" id="btnAdd">決定</button>
+      </div>
     </div>
-    <div id="errDate" class="field-error">日付を選択してください</div>
+
     <div id="errDup"  class="field-error">その日付はすでに追加されています</div>
     <div class="entries" id="entriesArea">
       <div class="entries-empty" id="entriesEmpty">日付を追加すると、ここに設定欄が表示されます</div>
@@ -357,12 +438,22 @@
 
   /* ===== エントリー管理 ===== */
   const entries = new Map();
-  const dateInput    = document.getElementById('dateInput');
-  const btnAdd       = document.getElementById('btnAdd');
-  const entriesArea  = document.getElementById('entriesArea');
-  const entriesEmpty = document.getElementById('entriesEmpty');
-  const errDate      = document.getElementById('errDate');
-  const errDup       = document.getElementById('errDup');
+  const dateInput     = document.getElementById('dateInput');
+  const btnOpenDate    = document.getElementById('btnOpenDate');
+  const btnAdd         = document.getElementById('btnAdd');
+  const btnDraftCancel = document.getElementById('btnDraftCancel');
+  const entriesArea    = document.getElementById('entriesArea');
+  const entriesEmpty   = document.getElementById('entriesEmpty');
+  const errDup         = document.getElementById('errDup');
+  const errDraftType   = document.getElementById('errDraftType');
+
+  const draftCard    = document.getElementById('draftCard');
+  const draftDateLbl  = document.getElementById('draftDateLbl');
+  const draftTimeFree = document.getElementById('draftTimeFree');
+  const draftRequestType = document.getElementById('draftRequestType');
+  const draftReason   = document.getElementById('draftReason');
+
+  let draftDateStr = null; // 現在編集中（下書き）の日付。null=下書きカード非表示
 
   dateInput.setAttribute('min', new Date().toLocaleDateString('sv-SE'));
 
@@ -372,45 +463,103 @@
     return `${m}月${d}日（${DAY[new Date(y,m-1,d).getDay()]}）`;
   }
 
+  // 「休み希望日を追加」ボタン：隠した日付inputのピッカーを開く
+  btnOpenDate.addEventListener('click', () => {
+    if (typeof dateInput.showPicker === 'function') {
+      try { dateInput.showPicker(); return; } catch(e) { /* フォールバックへ */ }
+    }
+    dateInput.focus();
+    dateInput.click();
+  });
+
+  // 日付が選ばれたら、下書き入力カードを開く
+  dateInput.addEventListener('change', () => {
+    const dateStr = dateInput.value;
+    if (!dateStr) return;
+    errDup.classList.remove('on');
+    if (entries.has(dateStr)) {
+      errDup.classList.add('on');
+      dateInput.value = '';
+      return;
+    }
+    openDraft(dateStr);
+  });
+
+  function openDraft(dateStr) {
+    draftDateStr = dateStr;
+    draftDateLbl.textContent = `📅 ${fmtDate(dateStr)}`;
+    // 入力欄をリセット
+    draftCard.querySelectorAll('input[name="draft_ampm"]').forEach(r => r.checked = (r.value === '終日'));
+    draftTimeFree.value = '';
+    draftRequestType.value = '';
+    draftRequestType.style.borderColor = 'var(--border)';
+    draftReason.value = '';
+    errDraftType.classList.remove('on');
+    draftCard.classList.add('show');
+    draftCard.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+
+  function closeDraft() {
+    draftDateStr = null;
+    draftCard.classList.remove('show');
+    dateInput.value = '';
+  }
+
+  btnDraftCancel.addEventListener('click', () => {
+    closeDraft();
+  });
+
+  btnAdd.addEventListener('click', () => {
+    if (!draftDateStr) return;
+    const requestType = draftRequestType.value;
+    if (!requestType) {
+      errDraftType.classList.add('on');
+      draftRequestType.style.borderColor = 'var(--error)';
+      return;
+    }
+    const ampm = draftCard.querySelector('input[name="draft_ampm"]:checked')?.value || '終日';
+    const data = {
+      date: draftDateStr,
+      ampm: ampm,
+      timeFree: draftTimeFree.value.trim(),
+      requestType: requestType,
+      reason: draftReason.value.trim()
+    };
+    entries.set(draftDateStr, data);
+
+    const sortedDates = [...entries.keys()].sort();
+    const idx = sortedDates.indexOf(draftDateStr);
+    const newCard = createEntryCard(draftDateStr);
+    const allCards = [...entriesArea.querySelectorAll('.entry-card')];
+    if (idx >= allCards.length) entriesArea.appendChild(newCard);
+    else entriesArea.insertBefore(newCard, allCards[idx]);
+    updateEmpty();
+    closeDraft();
+  });
+
+  // 確定済みエントリーの表示カード（読み取り専用の確認表示＋削除ボタンのみ）
   function createEntryCard(dateStr) {
     const data = entries.get(dateStr);
     const uid  = 'e_' + dateStr.replace(/-/g,'');
     const card = document.createElement('div');
     card.className = 'entry-card';
     card.id = 'card_' + uid;
+
+    const ampmLabelMap = { 'AM':'午前', 'PM':'午後', '終日':'終日' };
+    const timeText = data.timeFree ? `（${data.timeFree}）` : '';
+    const reasonHtml = data.reason
+      ? `<div class="entry-field-lbl" style="margin-top:8px;">理由・メモ</div><div style="font-size:13px;color:var(--text);">${data.reason}</div>`
+      : '';
+
     card.innerHTML = `
       <div class="entry-head">
         <span class="entry-date-lbl">📅 ${fmtDate(dateStr)}</span>
         <button class="btn-del" aria-label="削除">✕</button>
       </div>
-      <div class="entry-field">
-        <div class="entry-field-lbl">TIME ZONE</div>
-        <div class="ampm-toggle">
-          <input type="radio" class="ampm-am"  name="ampm_${uid}" id="am_${uid}"  value="AM" />
-          <label for="am_${uid}">午前 AM</label>
-          <input type="radio" class="ampm-pm"  name="ampm_${uid}" id="pm_${uid}"  value="PM" />
-          <label for="pm_${uid}">午後 PM</label>
-          <input type="radio" class="ampm-all" name="ampm_${uid}" id="all_${uid}" value="終日" checked />
-          <label for="all_${uid}">終日</label>
-        </div>
-        <input type="text" class="time-free" id="tf_${uid}"
-          placeholder="時間を自由記入（例：10:00〜15:00） 任意" />
+      <div style="font-size:13px;color:var(--text);">
+        ${ampmLabelMap[data.ampm] || data.ampm}${timeText}／<strong>${data.requestType}</strong>
       </div>
-      <div class="entry-field">
-        <div class="entry-field-lbl">希望内容</div>
-        <select class="entry-select" id="rt_${uid}">
-          <option value="">― 選択してください ―</option>
-          <option value="公休">公休</option>
-          <option value="有休">有休</option>
-          <option value="振休">振休</option>
-          <option value="欠勤">欠勤</option>
-        </select>
-      </div>
-      <div class="entry-field">
-        <div class="entry-field-lbl">理由・メモ <span style="font-weight:400">任意</span></div>
-        <textarea class="entry-reason" id="rs_${uid}"
-          placeholder="例：通院のため、家族の行事のため…"></textarea>
-      </div>
+      ${reasonHtml}
     `;
     card.querySelector('.btn-del').addEventListener('click', () => {
       entries.delete(dateStr);
@@ -418,19 +567,6 @@
       card.style.opacity = '0';
       setTimeout(() => { card.remove(); updateEmpty(); }, 150);
     });
-    const syncData = () => {
-      data.ampm        = card.querySelector(`input[name="ampm_${uid}"]:checked`)?.value || '終日';
-      data.timeFree    = card.querySelector(`#tf_${uid}`).value.trim();
-      data.requestType = card.querySelector(`#rt_${uid}`).value;
-      data.reason      = card.querySelector(`#rs_${uid}`).value.trim();
-      
-      // 未選択エラー表示の枠線リセット用
-      if(data.requestType) {
-        card.querySelector(`#rt_${uid}`).style.borderColor = 'var(--border)';
-      }
-    };
-    card.addEventListener('change', syncData);
-    card.addEventListener('input',  syncData);
     return card;
   }
 
@@ -438,38 +574,11 @@
     entriesEmpty.style.display = entries.size === 0 ? '' : 'none';
   }
 
-  btnAdd.addEventListener('click', () => {
-    errDate.classList.remove('on');
-    errDup.classList.remove('on');
-    const dateStr = dateInput.value;
-    if (!dateStr) { errDate.classList.add('on'); dateInput.focus(); return; }
-    if (entries.has(dateStr)) { errDup.classList.add('on'); return; }
-    entries.set(dateStr, { date:dateStr, ampm:'終日', timeFree:'', requestType:'', reason:'' });
-    dateInput.value = '';
-    const sortedDates = [...entries.keys()].sort();
-    const idx = sortedDates.indexOf(dateStr);
-    const newCard = createEntryCard(dateStr);
-    const allCards = [...entriesArea.querySelectorAll('.entry-card')];
-    if (idx >= allCards.length) entriesArea.appendChild(newCard);
-    else entriesArea.insertBefore(newCard, allCards[idx]);
-    updateEmpty();
-  });
-  dateInput.addEventListener('keydown', e => { if(e.key==='Enter') btnAdd.click(); });
-
   /* ===== 送信処理 (★GAS連携のCORS通信用に最適化) ===== */
   const btnSubmit = document.getElementById('btnSubmit');
 
   btnSubmit.addEventListener('click', async () => {
     if (entries.size === 0) { showToast('希望日を1件以上追加してください','error'); return; }
-    let valid = true;
-    entries.forEach((data, dateStr) => {
-      if (!data.requestType) {
-        const sel = document.getElementById('rt_e_' + dateStr.replace(/-/g,''));
-        if (sel) sel.style.borderColor = 'var(--error)';
-        valid = false;
-      }
-    });
-    if (!valid) { showToast('すべての日付の希望内容を選択してください','error'); return; }
 
     btnSubmit.disabled = true;
     btnSubmit.classList.add('loading');
