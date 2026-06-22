@@ -31,8 +31,7 @@
     .btn-open-date{width:100%;height:54px;border:1.5px dashed var(--primary);border-radius:var(--r-inp);background:#EAF4F7;color:var(--primary);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s;-webkit-tap-highlight-color:transparent;}
     .btn-open-date:active{background:#DCEBF0;transform:scale(.98);}
     .btn-open-date-icon{font-size:18px;}
-    /* ★ 修正: pointer-events:none でフォーカス後のタップ吸収を防ぐ */
-    .date-input-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;pointer-events:none;}
+    .date-input-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
     .draft-card{display:none;border:1.5px solid var(--primary);border-radius:12px;padding:14px 14px 12px;background:#EAF4F7;margin-top:12px;animation:entryIn .2s ease;}
     .draft-card.show{display:block;}
     .draft-head{margin-bottom:10px;}
@@ -104,7 +103,7 @@
     .ampm-pill.pm{background:#5A2D9C;color:#fff;}
     .hist-date-tag .req-type{font-size:10px;color:var(--muted);font-weight:600;}
     .hist-empty{font-size:13px;color:var(--muted);text-align:center;padding:4px 0;}
-    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E2D3A;color:#fff;padding:12px 22px;border-radius:30px;font-size:14px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.25);}
+    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E2D3A;color:#fff;padding:12px 22px;border-radius:30px;font-size:14px;font-weight:600;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.25);}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
     .toast.success{background:var(--primary);}
     .toast.error{background:var(--error);}
@@ -244,7 +243,13 @@
 
   btnOpenDate.addEventListener('click', () => {
     if (typeof dateInput.showPicker === 'function') {
-      try { dateInput.showPicker(); return; } catch(e) {}
+      try {
+        dateInput.showPicker();
+        // ★ 修正: ピッカーを開いた直後にblurでフォーカスを解放する
+        // モバイルのネイティブピッカーはOSレベルで動くので閉じない
+        requestAnimationFrame(() => dateInput.blur());
+        return;
+      } catch(e) {}
     }
     dateInput.focus();
     dateInput.click();
