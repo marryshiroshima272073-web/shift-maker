@@ -8,332 +8,115 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:        #F2F7F9;
-      --surface:   #FFFFFF;
-      --primary:   #2A7D9C;
-      --primary-d: #1F5F78;
-      --accent:    #4BBFA0;
-      --text:      #1E2D3A;
-      --muted:     #7A8F9C;
-      --border:    #D3E4EC;
-      --error:     #D64045;
-      --hist-bg:   #F0FAF7;
-      --hist-bdr:  #B2E0D4;
-      --r-card: 14px; --r-btn: 10px; --r-inp: 8px;
-      --shadow: 0 2px 12px rgba(42,125,156,.10);
+      --bg:#F2F7F9;--surface:#FFFFFF;--primary:#2A7D9C;--primary-d:#1F5F78;
+      --accent:#4BBFA0;--text:#1E2D3A;--muted:#7A8F9C;--border:#D3E4EC;
+      --error:#D64045;--hist-bg:#F0FAF7;--hist-bdr:#B2E0D4;
+      --r-card:14px;--r-btn:10px;--r-inp:8px;
+      --shadow:0 2px 12px rgba(42,125,156,.10);
     }
-    html,body {
-      background:var(--bg); color:var(--text);
-      font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
-      font-size:15px; line-height:1.6;
-      -webkit-font-smoothing:antialiased;
-    }
-    .page { max-width:480px; margin:0 auto; padding:0 0 56px; }
-
-    /* ヘッダー */
-    .header {
-      background:linear-gradient(135deg,var(--primary) 0%,#1a8fa8 100%);
-      padding:28px 20px 22px;
-      display:flex; align-items:center; gap:14px; position:relative;
-    }
-    .header::after {
-      content:''; position:absolute; bottom:-12px; left:0; right:0;
-      height:12px; background:var(--bg); border-radius:14px 14px 0 0;
-    }
-    .avatar-wrap {
-      flex-shrink:0; width:56px; height:56px; border-radius:50%;
-      background:rgba(255,255,255,.25); border:2.5px solid rgba(255,255,255,.6);
-      overflow:hidden; display:flex; align-items:center; justify-content:center;
-    }
-    #avatar { width:100%; height:100%; object-fit:cover; display:none; }
-    .avatar-ph { font-size:26px; color:rgba(255,255,255,.8); }
-    .header-info { flex:1; }
-    .header-lbl { font-size:11px; color:rgba(255,255,255,.75); letter-spacing:.06em; }
-    #userName { font-size:18px; font-weight:700; color:#fff; word-break:break-all; }
-    .header-title {
-      position:absolute; right:18px; top:14px;
-      font-size:11px; font-weight:600; color:rgba(255,255,255,.6);
-    }
-
-    /* 共通カード */
-    .card {
-      background:var(--surface); border-radius:var(--r-card);
-      box-shadow:var(--shadow); padding:18px 16px; margin:20px 14px 0;
-      position:relative; /* 子要素の絶対配置の基準にするため追加 */
-    }
-    .sec-label {
-      display:flex; align-items:center; gap:8px;
-      font-size:12px; font-weight:700; letter-spacing:.08em;
-      color:var(--primary); text-transform:uppercase; margin-bottom:14px;
-    }
-    .sec-label .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
-
-    /* 「休み希望日を追加」ボタン */
-    .btn-open-date {
-      width:100%; height:54px;
-      border:1.5px dashed var(--primary); border-radius:var(--r-inp);
-      background:#EAF4F7; color:var(--primary);
-      font-size:15px; font-weight:700; cursor:pointer;
-      display:flex; align-items:center; justify-content:center; gap:8px;
-      transition:background .15s,transform .1s;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .btn-open-date:active { background:#DCEBF0; transform:scale(.98); }
-    .btn-open-date-icon { font-size:18px; }
-    
-    /* 【変更箇所】実体の日付inputの非表示スタイルを最適化 */
-    .date-input-hidden {
-      position:absolute;
-      opacity:0;
-      pointer-events:none;
-      width:1px;
-      height:1px;
-    }
-
-    /* 下書き入力カード（日付選択直後〜「決定」まで） */
-    .draft-card {
-      display:none;
-      border:1.5px solid var(--primary); border-radius:12px;
-      padding:14px 14px 12px; background:#EAF4F7;
-      margin-top:12px; animation:entryIn .2s ease;
-    }
-    .draft-card.show { display:block; }
-    .draft-head { margin-bottom:10px; }
-    .draft-date-lbl { font-size:15px; font-weight:700; color:var(--primary); }
-    .draft-actions { display:flex; gap:8px; margin-top:4px; }
-    .btn-draft-cancel {
-      flex:1; height:44px;
-      border:1.5px solid var(--border); border-radius:var(--r-inp);
-      background:#fff; color:var(--muted);
-      font-size:14px; font-weight:700; cursor:pointer;
-      transition:background .15s; -webkit-tap-highlight-color:transparent;
-    }
-    .btn-draft-cancel:active { background:var(--bg); }
-    .draft-actions .btn-add { flex:1; justify-content:center; }
-
-    /* 日付追加行 */
-    .add-row { display:flex; gap:8px; align-items:center; }
-    input[type="date"] {
-      flex:1; height:44px; min-width:0;
-      border:1.5px solid var(--border); border-radius:var(--r-inp);
-      padding:0 10px; font-size:14px; color:var(--text);
-      background:var(--bg); outline:none;
-      transition:border-color .2s; -webkit-appearance:none;
-    }
-    input[type="date"]:focus { border-color:var(--primary); background:#fff; }
-    .btn-add {
-      flex-shrink:0; height:44px; padding:0 16px;
-      border:none; border-radius:var(--r-inp);
-      background:var(--primary); color:#fff;
-      font-size:14px; font-weight:700; cursor:pointer;
-      display:flex; align-items:center; gap:4px; white-space:nowrap;
-      transition:background .18s,transform .1s;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .btn-add:active { background:var(--primary-d); transform:scale(.97); }
-    .btn-add:disabled { background:var(--muted); cursor:not-allowed; }
-    .field-error { font-size:12px; color:var(--error); margin-top:6px; display:none; }
-    .field-error.on { display:block; }
-
-    /* エントリーカード群 */
-    .entries { display:flex; flex-direction:column; gap:12px; margin-top:14px; }
-    .entry-card {
-      border:1.5px solid var(--border); border-radius:12px;
-      padding:14px 14px 12px; background:#FAFCFD;
-      animation:entryIn .2s ease; position:relative;
-    }
-    @keyframes entryIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-    .entry-head {
-      display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
-    }
-    .entry-date-lbl { font-size:15px; font-weight:700; color:var(--primary); }
-    .btn-del {
-      width:26px; height:26px; border-radius:50%;
-      border:none; background:rgba(214,64,69,.12);
-      color:var(--error); font-size:15px; line-height:1;
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
-      transition:background .15s; -webkit-tap-highlight-color:transparent;
-    }
-    .btn-del:hover { background:rgba(214,64,69,.25); }
-
-    /* AM/PM トグル */
-    .ampm-toggle {
-      display:flex; border:1.5px solid var(--border);
-      border-radius:var(--r-inp); overflow:hidden; margin-bottom:10px;
-    }
-    .ampm-toggle input[type="radio"] { display:none; }
-    .ampm-toggle label {
-      flex:1; display:flex; align-items:center; justify-content:center;
-      height:38px; font-size:12px; font-weight:700;
-      color:var(--muted); background:var(--bg);
-      cursor:pointer; user-select:none;
-      transition:background .15s,color .15s;
-      -webkit-tap-highlight-color:transparent;
-      border-right:1px solid var(--border);
-    }
-    .ampm-toggle label:last-of-type { border-right:none; }
-    .ampm-toggle input:checked + label { font-weight:800; }
-    .ampm-all:checked + label { background:var(--primary); color:#fff; }
-    .ampm-am:checked  + label { background:#FFF0D6; color:#A05C00; }
-    .ampm-pm:checked  + label { background:#EDE0FF; color:#5A2D9C; }
-
-    /* 時間自由記述 */
-    .time-free {
-      width:100%; height:36px;
-      border:1.5px solid var(--border); border-radius:var(--r-inp);
-      padding:0 10px; font-size:13px; color:var(--text);
-      background:var(--bg); outline:none;
-      transition:border-color .2s; font-family:inherit; margin-bottom:10px;
-    }
-    .time-free:focus { border-color:var(--primary); background:#fff; }
-    .time-free::placeholder { color:var(--muted); }
-
-    /* 希望内容 */
-    .entry-select {
-      width:100%; height:40px;
-      border:1.5px solid var(--border); border-radius:var(--r-inp);
-      padding:0 10px; font-size:14px; color:var(--text);
-      background:var(--bg); outline:none;
-      transition:border-color .2s; font-family:inherit;
-      cursor:pointer; margin-bottom:10px;
-    }
-    .entry-select:focus { border-color:var(--primary); background:#fff; }
-
-    /* 理由 */
-    .entry-reason {
-      width:100%;
-      border:1.5px solid var(--border); border-radius:var(--r-inp);
-      padding:8px 10px; font-size:13px; color:var(--text);
-      background:var(--bg); outline:none;
-      transition:border-color .2s; font-family:inherit;
-      resize:none; height:58px; line-height:1.5;
-    }
-    .entry-reason:focus { border-color:var(--primary); background:#fff; }
-    .entry-reason::placeholder { color:var(--muted); }
-    .entry-field-lbl { font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.05em; margin-bottom:4px; }
-    .entry-field { margin-bottom:10px; }
-    .entry-field:last-child { margin-bottom:0; }
-    .entries-empty { font-size:13px; color:var(--muted); text-align:center; padding:10px 0 2px; }
-
-    /* 送信ボタン */
-    .submit-wrap { padding:24px 14px 0; }
-    .btn-submit {
-      display:block; width:100%; height:54px;
-      border:none; border-radius:var(--r-btn);
-      background:linear-gradient(135deg,var(--accent) 0%,#38a88e 100%);
-      color:#fff; font-size:17px; font-weight:800; letter-spacing:.04em;
-      cursor:pointer; box-shadow:0 4px 14px rgba(75,191,160,.38);
-      transition:opacity .18s,transform .1s,box-shadow .18s;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .btn-submit:active { opacity:.88; transform:scale(.98); }
-    .btn-submit:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-    .loader {
-      display:none; width:20px; height:20px;
-      border:2.5px solid rgba(255,255,255,.4); border-top-color:#fff;
-      border-radius:50%; animation:spin .7s linear infinite; margin:0 auto;
-    }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .btn-submit.loading .btn-label { display:none; }
-    .btn-submit.loading .loader   { display:block; }
-
-    /* ===== 送信履歴カード ===== */
-    .history-card {
-      background:var(--hist-bg);
-      border:1.5px solid var(--hist-bdr);
-      border-radius:var(--r-card);
-      box-shadow:var(--shadow);
-      padding:18px 16px;
-      margin:20px 14px 0;
-    }
-    .history-card .sec-label { color:#1a7a5e; }
-    .history-card .sec-label .dot { background:#4BBFA0; }
-
-    .hist-head {
-      display:flex; align-items:center; justify-content:space-between;
-      margin-bottom:10px;
-    }
-    .btn-clear-hist {
-      font-size:11px; color:var(--muted);
-      background:none; border:1px solid var(--border);
-      border-radius:20px; padding:3px 10px;
-      cursor:pointer; transition:background .15s,color .15s;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .btn-clear-hist:hover { background:var(--border); color:var(--text); }
-
-    .hist-list { display:flex; flex-direction:column; gap:10px; }
-    .hist-item {
-      background:#fff;
-      border:1px solid var(--hist-bdr);
-      border-radius:10px;
-      padding:12px 14px;
-      animation:entryIn .25s ease;
-    }
-    .hist-item-top {
-      display:flex; align-items:center; justify-content:space-between;
-      margin-bottom:6px;
-    }
-    .hist-submitted-at {
-      font-size:11px; color:var(--muted); font-weight:600;
-    }
-    .hist-badge {
-      font-size:11px; font-weight:800;
-      background:var(--accent); color:#fff;
-      border-radius:20px; padding:2px 9px;
-    }
-    .hist-del-btn {
-      width:22px; height:22px; border-radius:50%;
-      border:none; background:rgba(214,64,69,.12);
-      color:var(--error); font-size:13px; line-height:1;
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
-      transition:background .15s; -webkit-tap-highlight-color:transparent;
-      flex-shrink:0;
-    }
-    .hist-del-btn:hover { background:rgba(214,64,69,.25); }
-    .hist-dates { display:flex; flex-wrap:wrap; gap:6px; }
-    .hist-date-tag {
-      font-size:12px; font-weight:700;
-      background:var(--hist-bg); color:#1a7a5e;
-      border:1px solid var(--hist-bdr);
-      border-radius:20px; padding:3px 10px;
-      display:flex; align-items:center; gap:4px;
-    }
-    .hist-date-tag .ampm-pill {
-      font-size:10px; font-weight:800;
-      border-radius:10px; padding:1px 5px; line-height:1.4;
-    }
-    .ampm-pill.am  { background:#A05C00; color:#fff; }
-    .ampm-pill.pm  { background:#5A2D9C; color:#fff; }
-    .hist-date-tag .req-type {
-      font-size:10px; color:var(--muted); font-weight:600;
-    }
-    .hist-empty { font-size:13px; color:var(--muted); text-align:center; padding:4px 0; }
-
-    /* トースト */
-    .toast {
-      position:fixed; bottom:30px;
-      left:50%; transform:translateX(-50%) translateY(20px);
-      background:#1E2D3A; color:#fff;
-      padding:12px 22px; border-radius:30px;
-      font-size:14px; font-weight:600; white-space:nowrap;
-      opacity:0; pointer-events:none;
-      transition:opacity .25s,transform .25s;
-      z-index:9999; box-shadow:0 4px 18px rgba(0,0,0,.25);
-    }
-    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-    .toast.success { background:var(--primary); }
-    .toast.error   { background:var(--error); }
+    html,body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+    .page{max-width:480px;margin:0 auto;padding:0 0 56px;}
+    .header{background:linear-gradient(135deg,var(--primary) 0%,#1a8fa8 100%);padding:28px 20px 22px;display:flex;align-items:center;gap:14px;position:relative;}
+    .header::after{content:'';position:absolute;bottom:-12px;left:0;right:0;height:12px;background:var(--bg);border-radius:14px 14px 0 0;}
+    .avatar-wrap{flex-shrink:0;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.25);border:2.5px solid rgba(255,255,255,.6);overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    #avatar{width:100%;height:100%;object-fit:cover;display:none;}
+    .avatar-ph{font-size:26px;color:rgba(255,255,255,.8);}
+    .header-info{flex:1;}
+    .header-lbl{font-size:11px;color:rgba(255,255,255,.75);letter-spacing:.06em;}
+    #userName{font-size:18px;font-weight:700;color:#fff;word-break:break-all;}
+    .header-title{position:absolute;right:18px;top:14px;font-size:11px;font-weight:600;color:rgba(255,255,255,.6);}
+    .card{background:var(--surface);border-radius:var(--r-card);box-shadow:var(--shadow);padding:18px 16px;margin:20px 14px 0;}
+    .sec-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--primary);text-transform:uppercase;margin-bottom:14px;}
+    .sec-label .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+    .btn-open-date{width:100%;height:54px;border:1.5px dashed var(--primary);border-radius:var(--r-inp);background:#EAF4F7;color:var(--primary);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s;-webkit-tap-highlight-color:transparent;}
+    .btn-open-date:active{background:#DCEBF0;transform:scale(.98);}
+    .btn-open-date-icon{font-size:18px;}
+    /* ★ 修正: pointer-events:none でフォーカス後のタップ吸収を防ぐ */
+    .date-input-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;pointer-events:none;}
+    .draft-card{display:none;border:1.5px solid var(--primary);border-radius:12px;padding:14px 14px 12px;background:#EAF4F7;margin-top:12px;animation:entryIn .2s ease;}
+    .draft-card.show{display:block;}
+    .draft-head{margin-bottom:10px;}
+    .draft-date-lbl{font-size:15px;font-weight:700;color:var(--primary);}
+    .draft-actions{display:flex;gap:8px;margin-top:4px;}
+    .btn-draft-cancel{flex:1;height:44px;border:1.5px solid var(--border);border-radius:var(--r-inp);background:#fff;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;}
+    .btn-draft-cancel:active{background:var(--bg);}
+    .draft-actions .btn-add{flex:1;justify-content:center;}
+    .add-row{display:flex;gap:8px;align-items:center;}
+    input[type="date"]{flex:1;height:44px;min-width:0;border:1.5px solid var(--border);border-radius:var(--r-inp);padding:0 10px;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s;-webkit-appearance:none;}
+    input[type="date"]:focus{border-color:var(--primary);background:#fff;}
+    .btn-add{flex-shrink:0;height:44px;padding:0 16px;border:none;border-radius:var(--r-inp);background:var(--primary);color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;transition:background .18s,transform .1s;-webkit-tap-highlight-color:transparent;}
+    .btn-add:active{background:var(--primary-d);transform:scale(.97);}
+    .btn-add:disabled{background:var(--muted);cursor:not-allowed;}
+    .field-error{font-size:12px;color:var(--error);margin-top:6px;display:none;}
+    .field-error.on{display:block;}
+    .entries{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
+    .entry-card{border:1.5px solid var(--border);border-radius:12px;padding:14px 14px 12px;background:#FAFCFD;animation:entryIn .2s ease;position:relative;}
+    @keyframes entryIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .entry-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .entry-date-lbl{font-size:15px;font-weight:700;color:var(--primary);}
+    .btn-del{width:26px;height:26px;border-radius:50%;border:none;background:rgba(214,64,69,.12);color:var(--error);font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;-webkit-tap-highlight-color:transparent;}
+    .btn-del:hover{background:rgba(214,64,69,.25);}
+    .ampm-toggle{display:flex;border:1.5px solid var(--border);border-radius:var(--r-inp);overflow:hidden;margin-bottom:10px;}
+    .ampm-toggle input[type="radio"]{display:none;}
+    .ampm-toggle label{flex:1;display:flex;align-items:center;justify-content:center;height:38px;font-size:12px;font-weight:700;color:var(--muted);background:var(--bg);cursor:pointer;user-select:none;transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;border-right:1px solid var(--border);}
+    .ampm-toggle label:last-of-type{border-right:none;}
+    .ampm-toggle input:checked+label{font-weight:800;}
+    .ampm-all:checked+label{background:var(--primary);color:#fff;}
+    .ampm-am:checked+label{background:#FFF0D6;color:#A05C00;}
+    .ampm-pm:checked+label{background:#EDE0FF;color:#5A2D9C;}
+    .time-free{width:100%;height:36px;border:1.5px solid var(--border);border-radius:var(--r-inp);padding:0 10px;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s;font-family:inherit;margin-bottom:10px;}
+    .time-free:focus{border-color:var(--primary);background:#fff;}
+    .time-free::placeholder{color:var(--muted);}
+    .entry-select{width:100%;height:40px;border:1.5px solid var(--border);border-radius:var(--r-inp);padding:0 10px;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s;font-family:inherit;cursor:pointer;margin-bottom:10px;}
+    .entry-select:focus{border-color:var(--primary);background:#fff;}
+    .entry-reason{width:100%;border:1.5px solid var(--border);border-radius:var(--r-inp);padding:8px 10px;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s;font-family:inherit;resize:none;height:58px;line-height:1.5;}
+    .entry-reason:focus{border-color:var(--primary);background:#fff;}
+    .entry-reason::placeholder{color:var(--muted);}
+    .entry-field-lbl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:4px;}
+    .entry-field{margin-bottom:10px;}
+    .entry-field:last-child{margin-bottom:0;}
+    .entries-empty{font-size:13px;color:var(--muted);text-align:center;padding:10px 0 2px;}
+    .submit-wrap{padding:24px 14px 0;}
+    .btn-submit{display:block;width:100%;height:54px;border:none;border-radius:var(--r-btn);background:linear-gradient(135deg,var(--accent) 0%,#38a88e 100%);color:#fff;font-size:17px;font-weight:800;letter-spacing:.04em;cursor:pointer;box-shadow:0 4px 14px rgba(75,191,160,.38);transition:opacity .18s,transform .1s,box-shadow .18s;-webkit-tap-highlight-color:transparent;}
+    .btn-submit:active{opacity:.88;transform:scale(.98);}
+    .btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+    .loader{display:none;width:20px;height:20px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .btn-submit.loading .btn-label{display:none;}
+    .btn-submit.loading .loader{display:block;}
+    .history-card{background:var(--hist-bg);border:1.5px solid var(--hist-bdr);border-radius:var(--r-card);box-shadow:var(--shadow);padding:18px 16px;margin:20px 14px 0;}
+    .history-card .sec-label{color:#1a7a5e;}
+    .history-card .sec-label .dot{background:#4BBFA0;}
+    .hist-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .btn-clear-hist{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:20px;padding:3px 10px;cursor:pointer;transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;}
+    .btn-clear-hist:hover{background:var(--border);color:var(--text);}
+    .hist-list{display:flex;flex-direction:column;gap:10px;}
+    .hist-item{background:#fff;border:1px solid var(--hist-bdr);border-radius:10px;padding:12px 14px;animation:entryIn .25s ease;}
+    .hist-item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+    .hist-submitted-at{font-size:11px;color:var(--muted);font-weight:600;}
+    .hist-badge{font-size:11px;font-weight:800;background:var(--accent);color:#fff;border-radius:20px;padding:2px 9px;}
+    .hist-del-btn{width:22px;height:22px;border-radius:50%;border:none;background:rgba(214,64,69,.12);color:var(--error);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;}
+    .hist-del-btn:hover{background:rgba(214,64,69,.25);}
+    .hist-dates{display:flex;flex-wrap:wrap;gap:6px;}
+    .hist-date-tag{font-size:12px;font-weight:700;background:var(--hist-bg);color:#1a7a5e;border:1px solid var(--hist-bdr);border-radius:20px;padding:3px 10px;display:flex;align-items:center;gap:4px;}
+    .hist-date-tag .ampm-pill{font-size:10px;font-weight:800;border-radius:10px;padding:1px 5px;line-height:1.4;}
+    .ampm-pill.am{background:#A05C00;color:#fff;}
+    .ampm-pill.pm{background:#5A2D9C;color:#fff;}
+    .hist-date-tag .req-type{font-size:10px;color:var(--muted);font-weight:600;}
+    .hist-empty{font-size:13px;color:var(--muted);text-align:center;padding:4px 0;}
+    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E2D3A;color:#fff;padding:12px 22px;border-radius:30px;font-size:14px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.25);}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .toast.success{background:var(--primary);}
+    .toast.error{background:var(--error);}
   </style>
 </head>
 <body>
 <div class="page">
-
   <div class="header">
     <span class="header-title">薬局スタッフ専用</span>
     <div class="avatar-wrap">
       <img id="avatar" src="" alt="プロフィール" />
-      <span class="avatar-ph" id="avatarPh">👤</span>
+      <span class="avatar-ph" id="avatarPh">&#x1F464;</span>
     </div>
     <div class="header-info">
       <div class="header-lbl">ログイン中</div>
@@ -343,9 +126,8 @@
 
   <div class="card">
     <div class="sec-label"><span class="dot"></span>希望日を追加</div>
-
     <button class="btn-open-date" id="btnOpenDate">
-      <span class="btn-open-date-icon">📅</span>
+      <span class="btn-open-date-icon">&#x1F4C5;</span>
       休み希望日を追加
     </button>
     <input type="date" id="dateInput" class="date-input-hidden" />
@@ -364,8 +146,7 @@
           <input type="radio" class="ampm-all" name="draft_ampm" id="draft_all" value="終日" checked />
           <label for="draft_all">終日</label>
         </div>
-        <input type="text" class="time-free" id="draftTimeFree"
-          placeholder="時間を自由記入（例：10:00〜15:00） 任意" />
+        <input type="text" class="time-free" id="draftTimeFree" placeholder="時間を自由記入（例：10:00〜15:00） 任意" />
       </div>
       <div class="entry-field">
         <div class="entry-field-lbl">希望内容</div>
@@ -380,8 +161,7 @@
       </div>
       <div class="entry-field">
         <div class="entry-field-lbl">理由・メモ <span style="font-weight:400">任意</span></div>
-        <textarea class="entry-reason" id="draftReason"
-          placeholder="例：通院のため、家族の行事のため…"></textarea>
+        <textarea class="entry-reason" id="draftReason" placeholder="例：通院のため、家族の行事のため…"></textarea>
       </div>
       <div class="draft-actions">
         <button class="btn-draft-cancel" id="btnDraftCancel">キャンセル</button>
@@ -389,7 +169,7 @@
       </div>
     </div>
 
-    <div id="errDup"  class="field-error">その日付はすでに追加されています</div>
+    <div id="errDup" class="field-error">その日付はすでに追加されています</div>
     <div class="entries" id="entriesArea">
       <div class="entries-empty" id="entriesEmpty">日付を追加すると、ここに設定欄が表示されます</div>
     </div>
@@ -411,16 +191,13 @@
       <div class="hist-empty" id="histEmpty">送信すると、ここに履歴が表示されます</div>
     </div>
   </div>
-
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-  /* ★ ご提示いただいた GAS WebアプリのURLを差し込みました */
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvE5IVo-puDxTI7kJkAZ97nDwBtfn3tZYmIAgfLId8-Cql-vlaRVKdy-9nFz-KssQ/exec';
-
-  /* ===== LIFF 初期化 ===== */
   const LIFF_ID = '2010442037-S1Rulq1G';
+
   async function initLiff() {
     try {
       await liff.init({ liffId: LIFF_ID });
@@ -440,58 +217,43 @@
     }
   }
 
-  /* ===== エントリー管理 ===== */
   const entries = new Map();
-  const dateInput     = document.getElementById('dateInput');
-  const btnOpenDate    = document.getElementById('btnOpenDate');
-  const btnAdd         = document.getElementById('btnAdd');
-  const btnDraftCancel = document.getElementById('btnDraftCancel');
-  const entriesArea    = document.getElementById('entriesArea');
-  const entriesEmpty   = document.getElementById('entriesEmpty');
-  const errDup         = document.getElementById('errDup');
-  const errDraftType   = document.getElementById('errDraftType');
+  const dateInput       = document.getElementById('dateInput');
+  const btnOpenDate     = document.getElementById('btnOpenDate');
+  const btnAdd          = document.getElementById('btnAdd');
+  const btnDraftCancel  = document.getElementById('btnDraftCancel');
+  const entriesArea     = document.getElementById('entriesArea');
+  const entriesEmpty    = document.getElementById('entriesEmpty');
+  const errDup          = document.getElementById('errDup');
+  const errDraftType    = document.getElementById('errDraftType');
+  const draftCard       = document.getElementById('draftCard');
+  const draftDateLbl    = document.getElementById('draftDateLbl');
+  const draftTimeFree   = document.getElementById('draftTimeFree');
+  const draftRequestType= document.getElementById('draftRequestType');
+  const draftReason     = document.getElementById('draftReason');
 
-  const draftCard    = document.getElementById('draftCard');
-  const draftDateLbl  = document.getElementById('draftDateLbl');
-  const draftTimeFree = document.getElementById('draftTimeFree');
-  const draftRequestType = document.getElementById('draftRequestType');
-  const draftReason   = document.getElementById('draftReason');
-
-  let draftDateStr = null; // 現在編集中（下書き）の日付。null=下書きカード非表示
+  let draftDateStr = null;
 
   dateInput.setAttribute('min', new Date().toLocaleDateString('sv-SE'));
 
   const DAY = ['日','月','火','水','木','金','土'];
   function fmtDate(str) {
     const [y,m,d] = str.split('-').map(Number);
-    return `${m}月${d}日（${DAY[new Date(y,m-1,d).getDay()]}）`;
+    return m + '月' + d + '日（' + DAY[new Date(y,m-1,d).getDay()] + '）';
   }
 
-  // 【変更箇所】「休み希望日を追加」ボタンクリック時の処理変更（2回目以降開かないバグの対策）
   btnOpenDate.addEventListener('click', () => {
-    // 一度フォーカスを強制的に外し、選択値をクリアして内部ステートを初期化する
-    dateInput.blur();
-    dateInput.value = ''; 
-
-    // ブラウザが閉じるアニメーション・処理を完了するのをわずかに待ってから起動
-    setTimeout(() => {
-      if (typeof dateInput.showPicker === 'function') {
-        try { 
-          dateInput.showPicker(); 
-          return; 
-        } catch(e) { 
-          console.warn("showPicker error:", e); 
-        }
-      }
-      // フォールバック処理
-      dateInput.focus();
-      dateInput.click();
-    }, 50);
+    if (typeof dateInput.showPicker === 'function') {
+      try { dateInput.showPicker(); return; } catch(e) {}
+    }
+    dateInput.focus();
+    dateInput.click();
   });
 
-  // 日付が選ばれたら、下書き入力カードを開く
+  // ★ 修正: changeイベント後に blur() でフォーカスを解放する
   dateInput.addEventListener('change', () => {
     const dateStr = dateInput.value;
+    dateInput.blur(); // フォーカスを解放してボタンのタップ吸収を防ぐ
     if (!dateStr) return;
     errDup.classList.remove('on');
     if (entries.has(dateStr)) {
@@ -504,8 +266,7 @@
 
   function openDraft(dateStr) {
     draftDateStr = dateStr;
-    draftDateLbl.textContent = `📅 ${fmtDate(dateStr)}`;
-    // 入力欄をリセット
+    draftDateLbl.textContent = '&#x1F4C5; ' + fmtDate(dateStr);
     draftCard.querySelectorAll('input[name="draft_ampm"]').forEach(r => r.checked = (r.value === '終日'));
     draftTimeFree.value = '';
     draftRequestType.value = '';
@@ -516,15 +277,15 @@
     draftCard.scrollIntoView({ behavior:'smooth', block:'center' });
   }
 
+  // ★ 修正: closeDraft でも blur() してフォーカスを確実に解放する
   function closeDraft() {
     draftDateStr = null;
     draftCard.classList.remove('show');
-    dateInput.value = ''; // ★バグ対策：下書きが閉じたら値をクリアして次回のchangeイベントを保証
+    dateInput.value = '';
+    dateInput.blur(); // フォーカスを解放してボタンのタップ吸収を防ぐ
   }
 
-  btnDraftCancel.addEventListener('click', () => {
-    closeDraft();
-  });
+  btnDraftCancel.addEventListener('click', () => closeDraft());
 
   btnAdd.addEventListener('click', () => {
     if (!draftDateStr) return;
@@ -536,14 +297,10 @@
     }
     const ampm = draftCard.querySelector('input[name="draft_ampm"]:checked')?.value || '終日';
     const data = {
-      date: draftDateStr,
-      ampm: ampm,
-      timeFree: draftTimeFree.value.trim(),
-      requestType: requestType,
-      reason: draftReason.value.trim()
+      date: draftDateStr, ampm, timeFree: draftTimeFree.value.trim(),
+      requestType, reason: draftReason.value.trim()
     };
     entries.set(draftDateStr, data);
-
     const sortedDates = [...entries.keys()].sort();
     const idx = sortedDates.indexOf(draftDateStr);
     const newCard = createEntryCard(draftDateStr);
@@ -551,33 +308,28 @@
     if (idx >= allCards.length) entriesArea.appendChild(newCard);
     else entriesArea.insertBefore(newCard, allCards[idx]);
     updateEmpty();
-    closeDraft(); // ★ここでcloseDraftが動き、値が正常にクリアされます
+    closeDraft();
   });
 
-  // 確定済みエントリーの表示カード（読み取り専用の確認表示＋削除ボタンのみ）
   function createEntryCard(dateStr) {
     const data = entries.get(dateStr);
-    const uid  = 'e_' + dateStr.replace(/-/g,'');
+    const uid = 'e_' + dateStr.replace(/-/g,'');
     const card = document.createElement('div');
     card.className = 'entry-card';
     card.id = 'card_' + uid;
-
-    const ampmLabelMap = { 'AM':'午前', 'PM':'午後', '終日':'終日' };
-    const timeText = data.timeFree ? `（${data.timeFree}）` : '';
+    const ampmLabelMap = { 'AM':'午前','PM':'午後','終日':'終日' };
+    const timeText = data.timeFree ? '（' + data.timeFree + '）' : '';
     const reasonHtml = data.reason
-      ? `<div class="entry-field-lbl" style="margin-top:8px;">理由・メモ</div><div style="font-size:13px;color:var(--text);">${data.reason}</div>`
+      ? '<div class="entry-field-lbl" style="margin-top:8px;">理由・メモ</div><div style="font-size:13px;color:var(--text);">' + data.reason + '</div>'
       : '';
-
-    card.innerHTML = `
-      <div class="entry-head">
-        <span class="entry-date-lbl">📅 ${fmtDate(dateStr)}</span>
-        <button class="btn-del" aria-label="削除">✕</button>
-      </div>
-      <div style="font-size:13px;color:var(--text);">
-        ${ampmLabelMap[data.ampm] || data.ampm}${timeText}／<strong>${data.requestType}</strong>
-      </div>
-      ${reasonHtml}
-    `;
+    card.innerHTML =
+      '<div class="entry-head">' +
+        '<span class="entry-date-lbl">&#x1F4C5; ' + fmtDate(dateStr) + '</span>' +
+        '<button class="btn-del" aria-label="削除">✕</button>' +
+      '</div>' +
+      '<div style="font-size:13px;color:var(--text);">' +
+        (ampmLabelMap[data.ampm] || data.ampm) + timeText + '／<strong>' + data.requestType + '</strong>' +
+      '</div>' + reasonHtml;
     card.querySelector('.btn-del').addEventListener('click', () => {
       entries.delete(dateStr);
       card.style.transition = 'opacity .15s';
@@ -591,44 +343,27 @@
     entriesEmpty.style.display = entries.size === 0 ? '' : 'none';
   }
 
-  /* ===== 送信処理 ===== */
   const btnSubmit = document.getElementById('btnSubmit');
-
   btnSubmit.addEventListener('click', async () => {
     if (entries.size === 0) { showToast('希望日を1件以上追加してください','error'); return; }
-
     btnSubmit.disabled = true;
     btnSubmit.classList.add('loading');
-
     const sortedEntries = [...entries.values()].sort((a,b)=>a.date.localeCompare(b.date));
     const payload = {
-      userId:      window._liffProfile?.userId      || '',
+      userId: window._liffProfile?.userId || '',
       displayName: window._liffProfile?.displayName || '',
-      entries:     sortedEntries,
+      entries: sortedEntries,
       submittedAt: new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'}),
-      historyId:   Date.now() + '_' + Math.random().toString(36).slice(2,8)
+      historyId: Date.now() + '_' + Math.random().toString(36).slice(2,8)
     };
-    console.log('送信データ:', payload);
-
-    if (!GAS_URL) {
-      await new Promise(r=>setTimeout(r,900));
-      onSuccess(payload); return;
-    }
-    
+    if (!GAS_URL) { await new Promise(r=>setTimeout(r,900)); onSuccess(payload); return; }
     try {
       const response = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
+        method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload)
       });
-      
       const result = await response.json();
-      
-      if (result.status === 'ok') {
-        onSuccess(payload);
-      } else {
-        throw new Error(result.message || 'サーバー側でのエラー');
-      }
+      if (result.status === 'ok') onSuccess(payload);
+      else throw new Error(result.message || 'サーバー側でのエラー');
     } catch(err) {
       console.error('送信エラー:', err);
       showToast('送信に失敗しました。再度お試しください','error');
@@ -647,81 +382,51 @@
     setTimeout(()=>{ btnSubmit.disabled=false; }, 2000);
   }
 
-  /* ===== 送信履歴（localStorageで永続化） ===== */
   let historyLog = [];
   const histList  = document.getElementById('histList');
   const histEmpty = document.getElementById('histEmpty');
 
   function getHistKey() {
-    const uid = window._liffProfile?.userId || 'anonymous';
-    return 'kyuka_history_' + uid;
+    return 'kyuka_history_' + (window._liffProfile?.userId || 'anonymous');
   }
-
   function loadHistory() {
     try {
       const raw = localStorage.getItem(getHistKey());
       historyLog = raw ? JSON.parse(raw) : [];
       let needsSave = false;
-      historyLog.forEach(p => {
-        if (!p.historyId) {
-          p.historyId = Date.now() + '_' + Math.random().toString(36).slice(2,8);
-          needsSave = true;
-        }
-      });
+      historyLog.forEach(p => { if (!p.historyId) { p.historyId = Date.now()+'_'+Math.random().toString(36).slice(2,8); needsSave=true; } });
       if (needsSave) saveHistory();
-    } catch(e) {
-      console.warn('履歴の読み込みに失敗:', e);
-      historyLog = [];
-    }
+    } catch(e) { historyLog = []; }
   }
-
   function saveHistory() {
-    try {
-      localStorage.setItem(getHistKey(), JSON.stringify(historyLog));
-    } catch(e) {
-      console.warn('履歴の保存に失敗:', e);
-    }
+    try { localStorage.setItem(getHistKey(), JSON.stringify(historyLog)); } catch(e) {}
   }
-
-  function addHistory(payload) {
-    historyLog.unshift(payload);
-    saveHistory();
-    renderHistory();
-  }
+  function addHistory(payload) { historyLog.unshift(payload); saveHistory(); renderHistory(); }
 
   function renderHistory() {
     [...histList.querySelectorAll('.hist-item')].forEach(el=>el.remove());
-    if (historyLog.length === 0) {
-      histEmpty.style.display = '';
-      return;
-    }
-    histEmpty.style.display = 'none';
+    if (historyLog.length === 0) { histEmpty.style.display=''; return; }
+    histEmpty.style.display='none';
     historyLog.forEach(payload => {
       const item = document.createElement('div');
       item.className = 'hist-item';
-
       const dateTagsHtml = payload.entries.map(e => {
-        const ampmHtml = e.ampm !== '終日'
-          ? `<span class="ampm-pill ${e.ampm==='AM'?'am':'pm'}">${e.ampm}</span>`
-          : '';
-        const timeHtml = e.timeFree ? `<span class="req-type">(${e.timeFree})</span>` : '';
-        const reqHtml  = e.requestType ? `<span class="req-type">／${e.requestType}</span>` : '';
-        return `<span class="hist-date-tag">${fmtDate(e.date)}${ampmHtml}${timeHtml}${reqHtml}</span>`;
+        const ampmHtml = e.ampm !== '終日' ? '<span class="ampm-pill ' + (e.ampm==='AM'?'am':'pm') + '">' + e.ampm + '</span>' : '';
+        const timeHtml = e.timeFree ? '<span class="req-type">(' + e.timeFree + ')</span>' : '';
+        const reqHtml  = e.requestType ? '<span class="req-type">／' + e.requestType + '</span>' : '';
+        return '<span class="hist-date-tag">' + fmtDate(e.date) + ampmHtml + timeHtml + reqHtml + '</span>';
       }).join('');
-
-      item.innerHTML = `
-        <div class="hist-item-top">
-          <span class="hist-submitted-at">🕐 ${payload.submittedAt}</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span class="hist-badge">${payload.entries.length}日分</span>
-            <button class="hist-del-btn" data-hid="${payload.historyId}" aria-label="この履歴を削除">✕</button>
-          </div>
-        </div>
-        <div class="hist-dates">${dateTagsHtml}</div>
-      `;
+      item.innerHTML =
+        '<div class="hist-item-top">' +
+          '<span class="hist-submitted-at">&#x1F550; ' + payload.submittedAt + '</span>' +
+          '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span class="hist-badge">' + payload.entries.length + '日分</span>' +
+            '<button class="hist-del-btn" data-hid="' + payload.historyId + '" aria-label="この履歴を削除">✕</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hist-dates">' + dateTagsHtml + '</div>';
       histList.appendChild(item);
     });
-
     histList.querySelectorAll('.hist-del-btn').forEach(btn => {
       btn.addEventListener('click', () => deleteHistoryItem(btn));
     });
@@ -730,92 +435,52 @@
   async function deleteHistoryItem(btn) {
     const hid = btn.getAttribute('data-hid');
     if (btn.disabled) return;
-    btn.disabled = true;
-    btn.textContent = '…';
-
-    const deletePayload = {
-      action: 'delete',
-      historyId: hid,
-      userId: window._liffProfile?.userId || ''
-    };
-
+    btn.disabled=true; btn.textContent='…';
     try {
       if (GAS_URL) {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(deletePayload)
-        });
-        const result = await response.json();
-        if (result.status !== 'ok') {
-          throw new Error(result.message || 'サーバー側での削除に失敗しました');
-        }
+        const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'delete',historyId:hid,userId:window._liffProfile?.userId||''}) });
+        const result = await res.json();
+        if (result.status !== 'ok') throw new Error(result.message);
       }
-      historyLog = historyLog.filter(p => p.historyId !== hid);
-      saveHistory();
-      renderHistory();
+      historyLog = historyLog.filter(p=>p.historyId!==hid);
+      saveHistory(); renderHistory();
       showToast('履歴を削除しました','success');
     } catch(err) {
-      console.error('履歴削除エラー:', err);
       showToast('削除に失敗しました。再度お試しください','error');
-      btn.disabled = false;
-      btn.textContent = '✕';
+      btn.disabled=false; btn.textContent='✕';
     }
   }
 
   const btnClearHist = document.getElementById('btnClearHist');
   btnClearHist.addEventListener('click', async () => {
-    if (historyLog.length === 0) return;
-    if (btnClearHist.disabled) return;
-    btnClearHist.disabled = true;
-    const originalLabel = btnClearHist.textContent;
-    btnClearHist.textContent = '削除中…';
-
-    const deletePayload = {
-      action: 'deleteAll',
-      userId: window._liffProfile?.userId || ''
-    };
-
+    if (historyLog.length===0 || btnClearHist.disabled) return;
+    btnClearHist.disabled=true;
+    const orig = btnClearHist.textContent;
+    btnClearHist.textContent='削除中…';
     try {
       if (GAS_URL) {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(deletePayload)
-        });
-        const result = await response.json();
-        if (result.status !== 'ok') {
-          throw new Error(result.message || 'サーバー側での削除に失敗しました');
-        }
+        const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'deleteAll',userId:window._liffProfile?.userId||''}) });
+        const result = await res.json();
+        if (result.status !== 'ok') throw new Error(result.message);
       }
-      historyLog.length = 0;
-      saveHistory();
-      renderHistory();
+      historyLog.length=0; saveHistory(); renderHistory();
       showToast('履歴をすべて削除しました','success');
     } catch(err) {
-      console.error('一括削除エラー:', err);
       showToast('削除に失敗しました。再度お試しください','error');
     } finally {
-      btnClearHist.disabled = false;
-      btnClearHist.textContent = originalLabel;
+      btnClearHist.disabled=false; btnClearHist.textContent=orig;
     }
   });
 
-  /* ===== トースト ===== */
   let toastTimer;
   function showToast(msg, type='') {
     const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'toast'+(type?' '+type:'');
-    el.classList.add('show');
+    el.textContent=msg; el.className='toast'+(type?' '+type:''); el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>el.classList.remove('show'), 3200);
+    toastTimer=setTimeout(()=>el.classList.remove('show'),3200);
   }
 
-  initLiff().then(() => {
-    loadHistory();
-    renderHistory();
-  });
+  initLiff().then(() => { loadHistory(); renderHistory(); });
   updateEmpty();
 </script>
 </body>
