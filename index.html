@@ -242,11 +242,18 @@
   }
 
   btnOpenDate.addEventListener('click', () => {
+    // ★ 修正: 下書きカードが開いている場合はスクロールして案内する
+    if (draftDateStr !== null) {
+      showToast('入力中の日付を先に「決定」してください', 'error');
+      draftCard.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+    // ★ 修正: 直前の選択値をクリアしてからピッカーを開く
+    // 同じ日付を選んだ場合でも change イベントが発火するようにする
+    dateInput.value = '';
     if (typeof dateInput.showPicker === 'function') {
       try {
         dateInput.showPicker();
-        // ★ 修正: ピッカーを開いた直後にblurでフォーカスを解放する
-        // モバイルのネイティブピッカーはOSレベルで動くので閉じない
         requestAnimationFrame(() => dateInput.blur());
         return;
       } catch(e) {}
