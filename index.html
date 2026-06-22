@@ -59,6 +59,7 @@
     .card {
       background:var(--surface); border-radius:var(--r-card);
       box-shadow:var(--shadow); padding:18px 16px; margin:20px 14px 0;
+      position:relative; /* 子要素の絶対配置の基準にするため追加 */
     }
     .sec-label {
       display:flex; align-items:center; gap:8px;
@@ -79,11 +80,14 @@
     }
     .btn-open-date:active { background:#DCEBF0; transform:scale(.98); }
     .btn-open-date-icon { font-size:18px; }
-    /* 実体の日付inputは非表示にして、ボタン経由でのみ開く */
+    
+    /* 【変更箇所】実体の日付inputの非表示スタイルを最適化 */
     .date-input-hidden {
-      position:absolute; width:1px; height:1px;
-      padding:0; margin:-1px; overflow:hidden;
-      clip:rect(0,0,0,0); white-space:nowrap; border:0;
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+      width:1px;
+      height:1px;
     }
 
     /* 下書き入力カード（日付選択直後〜「決定」まで） */
@@ -463,14 +467,26 @@
     return `${m}月${d}日（${DAY[new Date(y,m-1,d).getDay()]}）`;
   }
 
-  // 「休み希望日を追加」ボタン：隠した日付inputのピッカーを開く
+  // 【変更箇所】「休み希望日を追加」ボタンクリック時の処理変更（2回目以降開かないバグの対策）
   btnOpenDate.addEventListener('click', () => {
-    dateInput.value = ''; // ★バグ対策：ボタンを押した瞬間にカレンダーの選択値を一度真っさらにクリア
-    if (typeof dateInput.showPicker === 'function') {
-      try { dateInput.showPicker(); return; } catch(e) { /* フォールバックへ */ }
-    }
-    dateInput.focus();
-    dateInput.click();
+    // 一度フォーカスを強制的に外し、選択値をクリアして内部ステートを初期化する
+    dateInput.blur();
+    dateInput.value = ''; 
+
+    // ブラウザが閉じるアニメーション・処理を完了するのをわずかに待ってから起動
+    setTimeout(() => {
+      if (typeof dateInput.showPicker === 'function') {
+        try { 
+          dateInput.showPicker(); 
+          return; 
+        } catch(e) { 
+          console.warn("showPicker error:", e); 
+        }
+      }
+      // フォールバック処理
+      dateInput.focus();
+      dateInput.click();
+    }, 50);
   });
 
   // 日付が選ばれたら、下書き入力カードを開く
