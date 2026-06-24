@@ -57,7 +57,6 @@
     .card {
       background:var(--surface); border-radius:var(--r-card);
       box-shadow:var(--shadow); padding:18px 16px; margin:20px 14px 0;
-      position:relative;
     }
     .sec-label {
       display:flex; align-items:center; gap:8px;
@@ -65,6 +64,13 @@
       color:var(--primary); text-transform:uppercase; margin-bottom:14px;
     }
     .sec-label .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+
+    /* ★修正①: ボタンとインプットを重ねるための親要素ラッパーを追加 */
+    .date-picker-wrapper {
+      position: relative;
+      width: 100%;
+      height: 54px;
+    }
 
     .btn-open-date {
       width:100%; height:54px;
@@ -78,12 +84,14 @@
     .btn-open-date:active { background:#DCEBF0; transform:scale(.98); }
     .btn-open-date-icon { font-size:18px; }
 
+    /* ★修正②: インプットを完全透明にしてボタンの真上にピッタリ被せる */
     .date-input-hidden {
-      position:absolute;
-      opacity:0;
-      pointer-events:none;
-      width:1px;
-      height:1px;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
     }
 
     .draft-card {
@@ -330,11 +338,13 @@
   <div class="card">
     <div class="sec-label"><span class="dot"></span>希望日を追加</div>
 
-    <button class="btn-open-date" id="btnOpenDate">
-      <span class="btn-open-date-icon">📅</span>
-      休み希望日を追加
-    </button>
-    <input type="date" id="dateInput" class="date-input-hidden" />
+    <div class="date-picker-wrapper">
+      <button class="btn-open-date" id="btnOpenDate" tabindex="-1">
+        <span class="btn-open-date-icon">📅</span>
+        休み希望日を追加
+      </button>
+      <input type="date" id="dateInput" class="date-input-hidden" />
+    </div>
 
     <div class="draft-card" id="draftCard">
       <div class="draft-head">
@@ -428,7 +438,6 @@
   /* ===== エントリー管理 ===== */
   const entries = new Map();
   const dateInput        = document.getElementById('dateInput');
-  const btnOpenDate      = document.getElementById('btnOpenDate');
   const btnAdd           = document.getElementById('btnAdd');
   const btnDraftCancel   = document.getElementById('btnDraftCancel');
   const entriesArea      = document.getElementById('entriesArea');
@@ -443,10 +452,6 @@
 
   let draftDateStr = null;
 
-  // ★修正①: changeイベントをブロックするフラグ
-  // closeDraft()でvalue=''をセットする際の意図しないchange発火を防ぐ
-  let _suppressChange = false;
-
   dateInput.setAttribute('min', new Date().toLocaleDateString('sv-SE'));
 
   const DAY = ['日','月','火','水','木','金','土'];
@@ -455,38 +460,22 @@
     return `${m}月${d}日（${DAY[new Date(y,m-1,d).getDay()]}）`;
   }
 
-  // ★修正②: ボタンクリック時はフラグを立てずにpickerを開く
-  // （valueのクリアはchangeイベントハンドラ内ではなく、ここで事前に行う）
-  btnOpenDate.addEventListener('click', () => {
-    _suppressChange = false; // pickerを開く前はchangeを受け付ける状態にする
-    dateInput.value = '';    // 前回値を消してchangeイベントを確実に発火させる
-
-    setTimeout(() => {
-      if (typeof dateInput.showPicker === 'function') {
-        try {
-          dateInput.showPicker();
-          return;
-        } catch(e) {
-          console.warn('showPicker error:', e);
-        }
-      }
-      dateInput.focus();
-      dateInput.click();
-    }, 50);
+  // ★修正④: JSでの無理なカレンダー起動操作（showPickerやclickの連打）をすべて廃止。
+  // input自身にタップさせるため、タップされた瞬間に「前回値」さえ消しておけば完璧に100%動きます。
+  dateInput.addEventListener('touchstart', () => {
+    dateInput.value = '';
+  });
+  dateInput.addEventListener('mousedown', () => {
+    dateInput.value = '';
   });
 
-  // ★修正③: suppressフラグが立っているときはchangeを無視する
+  // 日付が選ばれたら下書きを開く
   dateInput.addEventListener('change', () => {
-    if (_suppressChange) {
-      _suppressChange = false;
-      return;
-    }
     const dateStr = dateInput.value;
     if (!dateStr) return;
     errDup.classList.remove('on');
     if (entries.has(dateStr)) {
       errDup.classList.add('on');
-      // 重複のときもフラグなしでクリア（次回のchangeに影響しない）
       dateInput.value = '';
       return;
     }
@@ -509,9 +498,7 @@
   function closeDraft() {
     draftDateStr = null;
     draftCard.classList.remove('show');
-    // ★修正④: value=''のセットでchangeが誤発火しないようフラグを立ててからクリア
-    _suppressChange = true;
-    dateInput.value = '';
+    dateInput.value = ''; // 次回起動のためにクリア
   }
 
   btnDraftCancel.addEventListener('click', () => {
