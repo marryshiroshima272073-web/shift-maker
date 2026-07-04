@@ -86,6 +86,9 @@
       display: inline-block;
       margin-bottom: 12px;
     }
+    .step-badge.warning-badge {
+      background: #D64045;
+    }
     .step-text h3 {
       font-size: 16px;
       font-weight: 800;
@@ -97,7 +100,7 @@
       color: #4A5966;
       margin-bottom: 14px;
     }
-    /* 画像表示エリア（実画像がない場合はオシャレなプレースホルダーを表示） */
+    /* 画像表示エリア */
     .image-container {
       width: 100%;
       background: #F2F7F9;
@@ -116,7 +119,6 @@
       display: block;
       object-fit: cover;
     }
-    /* 画像未設定時のダミーテキスト */
     .image-placeholder-text {
       position: absolute;
       color: #7A8F9C;
@@ -159,6 +161,11 @@
       font-size: 13px;
       margin-top: 12px;
       color: #662224;
+    }
+    .alert-box.info-box {
+      background: #EAF4F7;
+      border-left: 4px solid #2A7D9C;
+      color: #1F5F78;
     }
     .alert-title { font-weight: 800; margin-bottom: 2px; }
 
@@ -213,28 +220,29 @@
     <p>LINEからいつでも1タップで起動。店舗スタッフの皆様が「かんたん」「スムーズ」にシフトの休み希望を提出・管理できるように作られた専用ページです。</p>
   </div>
 
-  <div class="section-title">✨ このツールの便利な特徴</div>
-  <div class="feature-grid">
-    <div class="feature-item">
-      <div class="feature-icon">👤</div>
-      <div class="feature-info">
-        <h4>ログイン作業は不要</h4>
-        <p>LINEから開くだけであなたの名前を自動認識。IDやパスワードを入れる手間がありません。</p>
-      </div>
+  <div class="section-title">🔰 最初にご確認ください（ログインと名前）</div>
+  
+  <!-- 名前・ログインに関する重要項目 -->
+  <div class="step-card">
+    <span class="step-badge warning-badge">重要</span>
+    <div class="step-text">
+      <h3>画面最上部の「名前」を確認する</h3>
+      <p>フォームを開くと、一番上にあなたのLINEの<b>「プロフィール画像」</b>と<b>「名前」</b>が自動で表示されます。</p>
     </div>
-    <div class="feature-item">
-      <div class="feature-icon">📦</div>
-      <div class="feature-info">
-        <h4>何日分でも、まとめて1回で送信</h4>
-        <p>希望日をポンポンとリストに登録していき、最後に「1回押すだけ」でまとめて申請できます。</p>
-      </div>
+    <div class="image-container img-aspect-short">
+      <div class="image-placeholder-text">【ここに header.png などを配置】<br>最上部（ログイン中・名前表示）のスクショ</div>
+      <img src="header.png" alt="" onerror="this.style.display='none'">
     </div>
-    <div class="feature-item">
-      <div class="feature-icon">📜</div>
-      <div class="feature-info">
-        <h4>手元に残る「自動履歴」</h4>
-        <p>過去にいつ、どんな内容を送信したかがスマホ内に自動保存され、いつでも見返せます。</p>
-      </div>
+
+    <div class="alert-box info-box">
+      <div class="alert-title">💡 「初回起動時」または「ログイン画面」が出た場合</div>
+      初めて起動するときに、LINEから<b>「アクセスの許可（ログイン）」</b>を求められる画面が出ることがあります。その場合は、画面の指示に従って「許可」や「同意」を押して進めてください。
+    </div>
+
+    <div class="alert-box">
+      <div class="alert-title">⚠️ 名前が「テストユーザー」になっている場合</div>
+      LINEアプリ以外のブラウザ（SafariやChromeなど）で直接このURLを開くと、エラーとなり名前が<b>「テストユーザー」</b>と表示されてしまいます。この状態では正しい送信ができません。<br>
+      必ず<b>【公式LINEアカウントのメニューやトーク内のリンク】</b>から開き直してください。
     </div>
   </div>
 
@@ -269,7 +277,7 @@
       <div class="image-placeholder-text">【ここに step2.png を配置】<br>詳細入力欄（下書きカード）のスクショ</div>
       <img src="step2.png" alt="" onerror="this.style.display='none'">
     </div>
-    <div class="alert-box">
+    <div class="alert-box info-box">
       <div class="alert-title">💡 日付や内容を間違えたときは？</div>
       決定を押すと予定が下に追加されます。右上の「✕」ボタンを押せばその場でいつでも取り消せます。
     </div>
